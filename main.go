@@ -14,6 +14,7 @@ import (
 	"adventofcode2024/puzzle6"
 	"adventofcode2024/puzzle7"
 	"adventofcode2024/puzzle8"
+	"adventofcode2024/puzzle9"
 )
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 		{6, p6},
 		{7, p7},
 		{8, p8},
+		{9, p9},
 	}
 
 	puzzleNum := ""
@@ -105,4 +107,11 @@ func p8(input io.Reader) {
 	area := puzzle8.ParseInput8(input)
 	fmt.Println(puzzle8.CountDistinctAntinodes(area))
 	fmt.Println(puzzle8.CountDistinctAntinodesWithResonantHarmonics(area))
+}
+
+func p9(input io.Reader) {
+	fileSystem := puzzle9.ParseInput9(input)
+	puzzle9.MoveBlocks(fileSystem.Blocks)
+	fmt.Println(puzzle9.ComputeChecksum(fileSystem.Blocks))
+	fmt.Println(puzzle9.ComputeChecksumFiles(puzzle9.MoveFiles(fileSystem.Files)))
 }
