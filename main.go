@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"adventofcode2024/puzzle1"
+	"adventofcode2024/puzzle10"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -31,6 +32,7 @@ func main() {
 		{7, p7},
 		{8, p8},
 		{9, p9},
+		{10, p10},
 	}
 
 	puzzleNum := ""
@@ -114,4 +116,13 @@ func p9(input io.Reader) {
 	puzzle9.MoveBlocks(fileSystem.Blocks)
 	fmt.Println(puzzle9.ComputeChecksum(fileSystem.Blocks))
 	fmt.Println(puzzle9.ComputeChecksumFiles(puzzle9.MoveFiles(fileSystem.Files)))
+}
+
+func p10(input io.Reader) {
+	area, err := puzzle10.ParseInput10(input)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(puzzle10.SumScoresOfTrailheads(area))
+	fmt.Println(puzzle10.CountDistinctTrails(area))
 }
