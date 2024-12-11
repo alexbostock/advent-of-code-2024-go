@@ -8,6 +8,7 @@ import (
 
 	"adventofcode2024/puzzle1"
 	"adventofcode2024/puzzle10"
+	"adventofcode2024/puzzle11"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -33,6 +34,7 @@ func main() {
 		{8, p8},
 		{9, p9},
 		{10, p10},
+		{11, p11},
 	}
 
 	puzzleNum := ""
@@ -125,4 +127,13 @@ func p10(input io.Reader) {
 	}
 	fmt.Println(puzzle10.SumScoresOfTrailheads(area))
 	fmt.Println(puzzle10.CountDistinctTrails(area))
+}
+
+func p11(input io.Reader) {
+	stones, err := puzzle11.ParseInput11(input)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(puzzle11.CountStonesAfterNumBlinks(stones, 25))
+	// fmt.Println(puzzle11.CountStonesAfterNumBlinks(stones, 75))
 }
