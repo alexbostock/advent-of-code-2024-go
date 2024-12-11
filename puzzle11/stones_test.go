@@ -19,9 +19,9 @@ func TestParseInput(t *testing.T) {
 	}
 }
 
-func TestCountStonesAfterNumBlinks(t *testing.T) {
+func TestCountAllStonesAfterNumBlinks(t *testing.T) {
 	stones := []int{125, 17}
-	got := CountStonesAfterNumBlinks(stones, 6)
+	got := CountAllStonesAfterNumBlinks(stones, 6)
 	expected := 22
 
 	if got != expected {
@@ -29,12 +29,22 @@ func TestCountStonesAfterNumBlinks(t *testing.T) {
 	}
 }
 
-func TestTransformStonesOnBlink(t *testing.T) {
-	stones := []int{0, 1, 10, 99, 999}
-	expected := []int{1, 2024, 1, 0, 9, 9, 2021976}
-	got := transformStonesOnBlink(stones)
+func TestTransformStoneOnBlink(t *testing.T) {
+	examples := []struct {
+		stone    int
+		expected []int
+	}{
+		{0, []int{1}},
+		{1, []int{2024}},
+		{10, []int{1, 0}},
+		{99, []int{9, 9}},
+		{999, []int{2021976}},
+	}
 
-	if !slices.Equal(got, expected) {
-		t.Errorf("expected %v, got %v", expected, got)
+	for _, example := range examples {
+		got := transformStoneOnBlink(example.stone)
+		if !slices.Equal(got, example.expected) {
+			t.Errorf("expected %v, got %v", example.expected, got)
+		}
 	}
 }

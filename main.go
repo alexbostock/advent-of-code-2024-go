@@ -134,6 +134,6 @@ func p11(input io.Reader) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(puzzle11.CountStonesAfterNumBlinks(stones, 25))
-	// fmt.Println(puzzle11.CountStonesAfterNumBlinks(stones, 75))
+	fmt.Println(puzzle11.CountAllStonesAfterNumBlinks(stones, 25))
+	fmt.Println(puzzle11.CountAllStonesAfterNumBlinks(stones, 75))
 }

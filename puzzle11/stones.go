@@ -24,39 +24,65 @@ func ParseInput11(data io.Reader) ([]int, error) {
 	return stones, nil
 }
 
-func CountStonesAfterNumBlinks(stones []int, numBlinks int) int {
-	for i := 0; i < numBlinks; i++ {
-		stones = transformStonesOnBlink(stones)
-	}
-	return len(stones)
+type SubProblem struct {
+	stone     int
+	numBlinks int
 }
 
-func transformStonesOnBlink(stones []int) []int {
-	transformed := make([]int, 0, len(stones)*2)
+func CountAllStonesAfterNumBlinks(stones []int, numBlinks int) int {
+	memoised := make(map[SubProblem]int)
+
+	count := 0
 	for _, stone := range stones {
-		if stone == 0 {
-			transformed = append(transformed, 1)
-			continue
-		}
+		count += CountStonesAfterNumBlinks(stone, numBlinks, memoised)
+	}
+	return count
+}
 
-		stoneStr := strconv.Itoa(stone)
-		if len(stoneStr)%2 == 0 {
-			stone1Str := stoneStr[0 : len(stoneStr)/2]
-			stone1, err := strconv.Atoi(stone1Str)
-			if err != nil {
-				panic(err)
-			}
-			transformed = append(transformed, stone1)
+func CountStonesAfterNumBlinks(stone int, numBlinks int, memoised map[SubProblem]int) int {
+	if numBlinks == 0 {
+		return 1
+	}
 
-			stone2Str := stoneStr[len(stoneStr)/2:]
-			stone2, err := strconv.Atoi(stone2Str)
-			if err != nil {
-				panic(err)
-			}
-			transformed = append(transformed, stone2)
-		} else {
-			transformed = append(transformed, stone*2024)
+	memoisedSolution, isMemoised := memoised[SubProblem{stone, numBlinks}]
+	if isMemoised {
+		return memoisedSolution
+	}
+
+	count := 0
+	transformed := transformStoneOnBlink(stone)
+	for _, transformedStone := range transformed {
+		count += CountStonesAfterNumBlinks(transformedStone, numBlinks-1, memoised)
+	}
+
+	memoised[SubProblem{stone, numBlinks}] = count
+	return count
+}
+
+func transformStoneOnBlink(stone int) []int {
+	var transformed []int
+	if stone == 0 {
+		transformed = append(transformed, 1)
+		return transformed
+	}
+
+	stoneStr := strconv.Itoa(stone)
+	if len(stoneStr)%2 == 0 {
+		stone1Str := stoneStr[0 : len(stoneStr)/2]
+		stone1, err := strconv.Atoi(stone1Str)
+		if err != nil {
+			panic(err)
 		}
+		transformed = append(transformed, stone1)
+
+		stone2Str := stoneStr[len(stoneStr)/2:]
+		stone2, err := strconv.Atoi(stone2Str)
+		if err != nil {
+			panic(err)
+		}
+		transformed = append(transformed, stone2)
+	} else {
+		transformed = append(transformed, stone*2024)
 	}
 	return transformed
 }
