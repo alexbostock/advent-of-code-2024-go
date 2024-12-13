@@ -10,6 +10,7 @@ import (
 	"adventofcode2024/puzzle10"
 	"adventofcode2024/puzzle11"
 	"adventofcode2024/puzzle12"
+	"adventofcode2024/puzzle13"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -37,6 +38,7 @@ func main() {
 		{10, p10},
 		{11, p11},
 		{12, p12},
+		{13, p13},
 	}
 
 	puzzleNum := ""
@@ -144,4 +146,13 @@ func p12(input io.Reader) {
 	area := puzzle12.ParseInput12(input)
 	fmt.Println(puzzle12.CostFences(area))
 	fmt.Println(puzzle12.CostFencesNumSides(area))
+}
+
+func p13(input io.Reader) {
+	machines, err := puzzle13.ParseInput13(input)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(puzzle13.SearchMinimumTokensToWinAllPrizes(machines))
+	fmt.Println(puzzle13.SearchMinimumTokensToWinAllPrizesWithPrizeError(machines))
 }
