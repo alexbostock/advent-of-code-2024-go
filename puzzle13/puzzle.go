@@ -2,8 +2,8 @@ package puzzle13
 
 import (
 	"bufio"
-	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -84,8 +84,7 @@ func SearchMinimumTokensToWinAllPrizes(machines []Machine) int {
 
 func SearchMinimumTokensToWinAllPrizesWithPrizeError(machines []Machine) int {
 	total := 0
-	for index, machine := range machines {
-		fmt.Println(index, len(machines))
+	for _, machine := range machines {
 		machine.prize.x += 10000000000000
 		machine.prize.y += 10000000000000
 		total += searchMinimumSolution(machine)
@@ -94,35 +93,25 @@ func SearchMinimumTokensToWinAllPrizesWithPrizeError(machines []Machine) int {
 }
 
 func searchMinimumSolution(machine Machine) int {
-	maxNumButtonAPresses := machine.prize.x/machine.a.x + 1
-	maxNumButtonAPressesY := machine.prize.y/machine.a.y + 1
-	if maxNumButtonAPressesY < maxNumButtonAPresses {
-		maxNumButtonAPresses = maxNumButtonAPressesY
+	// Solve simultaneous equations in a, b:
+	// a * machine.a.x + b * machine.b.x == machine.prize.x (1)
+	// a * machine.a.y + b * machine.b.y == machine.prize.y (2)
+
+	// (2) => b = (machine.prize.y - a * machine.a.y) / machine.b.y
+	// Substituting in (1): a * machine.a.x + machine.b.x * (machine.prize.y - a * machine.a.y) / machine.b.y == machine.prize.x
+	// => a (machine.a.x - machine.a.y * machine.b.x / machine.b.y) == machine.prize.x - machine.prize.y * machine.b.x / machine.b.y
+	// => a == ( machine.prize.x - machine.prize.y * machine.b.x / machine.b.y ) / ( machine.a.x - machine.a.y * machine.b.x / machine.b.y )
+
+	numerator := float64(machine.prize.x) - float64(machine.prize.y*machine.b.x)/float64(machine.b.y)
+	denominator := float64(machine.a.x) - float64(machine.a.y*machine.b.x)/float64(machine.b.y)
+	a := int(math.Round(numerator / denominator))
+	b := (machine.prize.y - a*machine.a.y) / machine.b.y
+
+	isValidSolution := a*machine.a.x+b*machine.b.x == machine.prize.x &&
+		a*machine.a.y+b*machine.b.y == machine.prize.y
+	if !isValidSolution {
+		return 0
 	}
 
-	maxNumButtonBPresses := machine.prize.x/machine.b.x + 1
-	maxNumButtonBPressesY := machine.prize.y/machine.b.y + 1
-	if maxNumButtonBPressesY < maxNumButtonBPresses {
-		maxNumButtonBPresses = maxNumButtonBPressesY
-	}
-
-	minimumCost := 0
-	for numButtonAPresses := 0; numButtonAPresses < maxNumButtonAPresses; numButtonAPresses++ {
-		if minimumCost > 0 && 3*numButtonAPresses > minimumCost {
-			continue
-		}
-		shortfallX := machine.prize.x - numButtonAPresses*machine.a.x
-		if shortfallX%machine.b.x != 0 {
-			continue
-		}
-		numButtonBPresses := shortfallX / machine.b.x
-		if numButtonAPresses*machine.a.y+numButtonBPresses*machine.b.y != machine.prize.y {
-			continue
-		}
-		cost := 3*numButtonAPresses + numButtonBPresses
-		if minimumCost == 0 || cost < minimumCost {
-			minimumCost = cost
-		}
-	}
-	return minimumCost
+	return 3*a + b
 }
