@@ -11,6 +11,7 @@ import (
 	"adventofcode2024/puzzle11"
 	"adventofcode2024/puzzle12"
 	"adventofcode2024/puzzle13"
+	"adventofcode2024/puzzle14"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -39,6 +40,7 @@ func main() {
 		{11, p11},
 		{12, p12},
 		{13, p13},
+		{14, p14},
 	}
 
 	puzzleNum := ""
@@ -155,4 +157,11 @@ func p13(input io.Reader) {
 	}
 	fmt.Println(puzzle13.SearchMinimumTokensToWinAllPrizes(machines))
 	fmt.Println(puzzle13.SearchMinimumTokensToWinAllPrizesWithPrizeError(machines))
+}
+
+func p14(input io.Reader) {
+	robots := puzzle14.ParseInput14(input)
+	after100Seconds := puzzle14.StateAfterSeconds(robots, 100, 101, 103)
+	fmt.Println(puzzle14.SafetyFactor(after100Seconds, 101, 103))
+	puzzle14.PrintEachState(robots, 50000, 101, 103)
 }
