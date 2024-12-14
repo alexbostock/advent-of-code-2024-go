@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -83,15 +82,13 @@ func SafetyFactor(robots []Robot, width, height int) int {
 }
 
 func PrintEachState(robots []Robot, seconds int, width, height int) {
-	reader := bufio.NewReader(os.Stdin)
-
 	for i := 0; i < seconds; i++ {
-		fmt.Println(i)
 		layout := PrintRobots(robots, width, height)
-		fmt.Println(layout)
 
 		if looksLikePossibleTree(layout) {
-			reader.ReadLine()
+			fmt.Println(layout)
+			fmt.Println(i)
+			return
 		}
 
 		robots = StateAfterSeconds(robots, 1, width, height)
