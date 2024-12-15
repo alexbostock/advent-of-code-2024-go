@@ -26,7 +26,7 @@ import (
 func main() {
 	puzzles := []struct {
 		puzzleNum int
-		solve     func(input io.Reader)
+		solve     func(input io.ReadSeeker)
 	}{
 		{1, p1},
 		{2, p2},
@@ -57,7 +57,7 @@ func main() {
 	}
 }
 
-func solvePuzzle(puzzleNum int, solve func(input io.Reader)) {
+func solvePuzzle(puzzleNum int, solve func(input io.ReadSeeker)) {
 	fmt.Printf("Puzzle %v\n", puzzleNum)
 	input, err := os.Open(fmt.Sprintf("./input/%v.txt", puzzleNum))
 	if err != nil {
@@ -67,7 +67,7 @@ func solvePuzzle(puzzleNum int, solve func(input io.Reader)) {
 	fmt.Println()
 }
 
-func p1(input io.Reader) {
+func p1(input io.ReadSeeker) {
 	left, right, err := puzzle1.ParseInput1(input)
 	if err != nil {
 		panic(err)
@@ -76,7 +76,7 @@ func p1(input io.Reader) {
 	fmt.Println(puzzle1.CalculateSimilarityScore(left, right))
 }
 
-func p2(input io.Reader) {
+func p2(input io.ReadSeeker) {
 	reports, err := puzzle2.ParseInput2(input)
 	if err != nil {
 		panic(err)
@@ -85,50 +85,50 @@ func p2(input io.Reader) {
 	fmt.Println(puzzle2.CountSafeReportsWithProblemDampener(reports))
 }
 
-func p3(input io.Reader) {
+func p3(input io.ReadSeeker) {
 	commands := puzzle3.ParseInput3(input)
 	fmt.Println(puzzle3.SumMuls(commands, false))
 	fmt.Println(puzzle3.SumMuls(commands, true))
 }
 
-func p4(input io.Reader) {
+func p4(input io.ReadSeeker) {
 	wordSearch := puzzle4.ParseInput4(input)
 	fmt.Println(puzzle4.CountXMASInWordSearch(wordSearch))
 	fmt.Println(puzzle4.CountCrossMASInWordSearch(wordSearch))
 }
 
-func p5(inputData io.Reader) {
+func p5(inputData io.ReadSeeker) {
 	input := puzzle5.ParseInput5(inputData)
 	fmt.Println(puzzle5.SumMiddlePagesOfCorrectlyOrderedUpdates(input))
 	fmt.Println(puzzle5.SumMiddlePagesOfFixedUpdates(input))
 }
 
-func p6(input io.Reader) {
+func p6(input io.ReadSeeker) {
 	area := puzzle6.ParseInput6(input)
 	fmt.Println(puzzle6.CountGuardPositionsVisited(area.Clone()))
 	fmt.Println(puzzle6.CountPossibleNewObstaclesCausingLoops(area))
 }
 
-func p7(input io.Reader) {
+func p7(input io.ReadSeeker) {
 	equations := puzzle7.ParseInput7(input)
 	fmt.Println(puzzle7.SumValidCalibrationEquations(equations, false))
 	fmt.Println(puzzle7.SumValidCalibrationEquations(equations, true))
 }
 
-func p8(input io.Reader) {
+func p8(input io.ReadSeeker) {
 	area := puzzle8.ParseInput8(input)
 	fmt.Println(puzzle8.CountDistinctAntinodes(area))
 	fmt.Println(puzzle8.CountDistinctAntinodesWithResonantHarmonics(area))
 }
 
-func p9(input io.Reader) {
+func p9(input io.ReadSeeker) {
 	fileSystem := puzzle9.ParseInput9(input)
 	puzzle9.MoveBlocks(fileSystem.Blocks)
 	fmt.Println(puzzle9.ComputeChecksum(fileSystem.Blocks))
 	fmt.Println(puzzle9.ComputeChecksumFiles(puzzle9.MoveFiles(fileSystem.Files)))
 }
 
-func p10(input io.Reader) {
+func p10(input io.ReadSeeker) {
 	area, err := puzzle10.ParseInput10(input)
 	if err != nil {
 		panic(err)
@@ -137,7 +137,7 @@ func p10(input io.Reader) {
 	fmt.Println(puzzle10.CountDistinctTrails(area))
 }
 
-func p11(input io.Reader) {
+func p11(input io.ReadSeeker) {
 	stones, err := puzzle11.ParseInput11(input)
 	if err != nil {
 		panic(err)
@@ -146,13 +146,13 @@ func p11(input io.Reader) {
 	fmt.Println(puzzle11.CountAllStonesAfterNumBlinks(stones, 75))
 }
 
-func p12(input io.Reader) {
+func p12(input io.ReadSeeker) {
 	area := puzzle12.ParseInput12(input)
 	fmt.Println(puzzle12.CostFences(area))
 	fmt.Println(puzzle12.CostFencesNumSides(area))
 }
 
-func p13(input io.Reader) {
+func p13(input io.ReadSeeker) {
 	machines, err := puzzle13.ParseInput13(input)
 	if err != nil {
 		panic(err)
@@ -161,15 +161,21 @@ func p13(input io.Reader) {
 	fmt.Println(puzzle13.SearchMinimumTokensToWinAllPrizesWithPrizeError(machines))
 }
 
-func p14(input io.Reader) {
+func p14(input io.ReadSeeker) {
 	robots := puzzle14.ParseInput14(input)
 	after100Seconds := puzzle14.StateAfterSeconds(robots, 100, 101, 103)
 	fmt.Println(puzzle14.SafetyFactor(after100Seconds, 101, 103))
 	puzzle14.PrintEachState(robots, 50000, 101, 103)
 }
 
-func p15(input io.Reader) {
+func p15(input io.ReadSeeker) {
 	warehouse := puzzle15.ParseInput15(input)
 	warehouse.ExecuteInstructions()
 	fmt.Println(warehouse.SumGPSCoordsOfBoxes())
+
+	input.Seek(0, io.SeekStart)
+
+	wideWarehouse := puzzle15.ParseInput15Wide(input)
+	wideWarehouse.ExecuteInstructions()
+	fmt.Println(wideWarehouse.SumGPSCoordsOfBoxes())
 }
