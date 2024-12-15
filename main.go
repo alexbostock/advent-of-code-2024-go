@@ -12,6 +12,7 @@ import (
 	"adventofcode2024/puzzle12"
 	"adventofcode2024/puzzle13"
 	"adventofcode2024/puzzle14"
+	"adventofcode2024/puzzle15"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -41,6 +42,7 @@ func main() {
 		{12, p12},
 		{13, p13},
 		{14, p14},
+		{15, p15},
 	}
 
 	puzzleNum := ""
@@ -164,4 +166,10 @@ func p14(input io.Reader) {
 	after100Seconds := puzzle14.StateAfterSeconds(robots, 100, 101, 103)
 	fmt.Println(puzzle14.SafetyFactor(after100Seconds, 101, 103))
 	puzzle14.PrintEachState(robots, 50000, 101, 103)
+}
+
+func p15(input io.Reader) {
+	warehouse := puzzle15.ParseInput15(input)
+	warehouse.ExecuteInstructions()
+	fmt.Println(warehouse.SumGPSCoordsOfBoxes())
 }
