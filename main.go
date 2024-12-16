@@ -13,6 +13,7 @@ import (
 	"adventofcode2024/puzzle13"
 	"adventofcode2024/puzzle14"
 	"adventofcode2024/puzzle15"
+	"adventofcode2024/puzzle16"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -43,6 +44,7 @@ func main() {
 		{13, p13},
 		{14, p14},
 		{15, p15},
+		{16, p16},
 	}
 
 	puzzleNum := ""
@@ -178,4 +180,11 @@ func p15(input io.ReadSeeker) {
 	wideWarehouse := puzzle15.ParseInput15Wide(input)
 	wideWarehouse.ExecuteInstructions()
 	fmt.Println(wideWarehouse.SumGPSCoordsOfBoxes())
+}
+
+func p16(input io.ReadSeeker) {
+	maze := puzzle16.ParseInput16(input)
+	cost, positionsSeen := maze.ShortestPath()
+	fmt.Println(cost)
+	fmt.Println(len(positionsSeen))
 }
