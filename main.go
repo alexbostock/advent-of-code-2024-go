@@ -14,6 +14,7 @@ import (
 	"adventofcode2024/puzzle14"
 	"adventofcode2024/puzzle15"
 	"adventofcode2024/puzzle16"
+	"adventofcode2024/puzzle17"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -45,6 +46,7 @@ func main() {
 		{14, p14},
 		{15, p15},
 		{16, p16},
+		{17, p17},
 	}
 
 	puzzleNum := ""
@@ -187,4 +189,11 @@ func p16(input io.ReadSeeker) {
 	cost, positionsSeen := maze.ShortestPath()
 	fmt.Println(cost)
 	fmt.Println(len(positionsSeen))
+}
+
+func p17(input io.ReadSeeker) {
+	state := puzzle17.ParseInput17(input)
+	output, _ := puzzle17.ExecuteProgram(state.Clone(), nil)
+	fmt.Println(output)
+	fmt.Println(puzzle17.FindRegAValueWhichMakesQuine(state))
 }
