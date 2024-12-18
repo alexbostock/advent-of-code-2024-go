@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -95,7 +96,7 @@ func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matche
 		case 5:
 			valToOutput := comboOperand % 8
 			if expectedOutput != nil {
-				if valToOutput != expectedOutput[offsetInExpectedOutput] {
+				if offsetInExpectedOutput >= len(expectedOutput) || valToOutput != expectedOutput[offsetInExpectedOutput] {
 					return "", false
 				}
 				offsetInExpectedOutput++
@@ -298,20 +299,43 @@ func FindRegAValueWhichMakesQuine(initialState State) int {
 	}
 
 	for _, constraint := range constraints {
-		fmt.Println(constraint)
 		fmt.Println(constraint.simplifyConstants())
 		fmt.Println()
 	}
 	// return 0
 
-	// Starting point derived from the above step
-	for regA := int(math.Pow(8, 16)); true; regA++ {
+	for regA := 0; regA < 8; regA++ {
+		state := initialState.Clone()
+		state.regA = regA
+		output, _ := ExecuteProgram(state, nil)
+		fmt.Println(regA, output)
+	}
+
+	// Starting point derived from the above step (does not work for test example)
+	lowerBound := int(math.Pow(8, 16))
+
+	// We also know, based on first output, that regA % 8 == 5 (== 0 for the test example)
+	for lowerBound%8 != 5 {
+		lowerBound--
+	}
+
+	numWorkers := runtime.NumCPU()
+	resultChan := make(chan int)
+	for i := 0; i < numWorkers; i++ {
+		go searchQuineWorker(resultChan, initialState, lowerBound+8*i, 8*numWorkers)
+	}
+
+	return <-resultChan
+}
+
+func searchQuineWorker(resultChan chan int, initialState State, startSearchAt int, interval int) {
+	for regA := startSearchAt; true; regA += interval {
 		state := initialState.Clone()
 		state.regA = regA
 		_, isQuine := ExecuteProgram(state, initialState.program)
 		if isQuine {
-			return regA
+			resultChan <- regA
+			return
 		}
 	}
-	return 0
 }
