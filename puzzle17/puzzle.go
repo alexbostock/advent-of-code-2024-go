@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"runtime"
 	"strconv"
 	"strings"
 )
@@ -71,8 +70,8 @@ func (state State) Clone() State {
 	}
 }
 
-func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matchesExpected bool) {
-	var output []string
+func ExecuteProgram(state State, expectedOutput []int) (output []int, outputStr string, matchesExpected bool) {
+	var outputStrs []string
 	offsetInExpectedOutput := 0
 
 	for state.pc = 0; state.pc < len(state.program); state.pc += 2 {
@@ -97,11 +96,13 @@ func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matche
 			valToOutput := comboOperand % 8
 			if expectedOutput != nil {
 				if offsetInExpectedOutput >= len(expectedOutput) || valToOutput != expectedOutput[offsetInExpectedOutput] {
-					return "", false
+					matchesExpected = false
+					return
 				}
 				offsetInExpectedOutput++
 			}
-			output = append(output, strconv.Itoa(valToOutput))
+			output = append(output, valToOutput)
+			outputStrs = append(outputStrs, strconv.Itoa(valToOutput))
 		case 6:
 			state.regB = state.regA / int(math.Pow(2, float64(comboOperand)))
 		case 7:
@@ -109,7 +110,7 @@ func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matche
 		}
 	}
 
-	return strings.Join(output, ","), expectedOutput == nil || len(output) == len(expectedOutput)
+	return output, strings.Join(outputStrs, ","), expectedOutput == nil || len(output) == len(expectedOutput)
 }
 
 func getComboOperand(state State, operand int) int {
@@ -231,111 +232,26 @@ func (operation *Operation) simplifyConstants() *Operation {
 	return operation
 }
 
-// Assumptions about the input:
-// - final instruction is a branch
-// - penultimate instruction is an output
-// so we can decide expected number of iterations based on length of expected output
 func FindRegAValueWhichMakesQuine(initialState State) int {
-	var constraints []*Operation
-	regA := &Operation{operator: INPUT_REG_A}
-	regB := &Operation{operator: LITERAL, operand1: initialState.regB}
-	regC := &Operation{operator: LITERAL, operand1: initialState.regC}
+	// Observations:
+	// Changing regA by 1 changes first output
+	// Changing regA by 8 changes second output
+	// Changing regA by 64 changes third output
+	// etc.
+	// (in each case, there is a chance of no change; changing regA by 8^n is necessary, not sufficient)
 
-	outputOffset := 0
-
-	for pc := 0; pc < len(initialState.program); pc += 2 {
-		opcode := initialState.program[pc]
-		operand := &Operation{operator: LITERAL, operand1: initialState.program[pc+1]}
-		comboOperand := operand
-		switch operand.operand1 {
-		case 4:
-			comboOperand = regA
-		case 5:
-			comboOperand = regB
-		case 6:
-			comboOperand = regC
-		}
-
-		switch opcode {
-		case 0:
-			regA = &Operation{
-				operator:          DIVIDE,
-				operand1Recursive: regA,
-				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
+	regA := 0
+	for outputOffset := len(initialState.program) - 1; outputOffset >= 0; outputOffset-- {
+		interval := int(math.Pow(8, float64(outputOffset)))
+		for {
+			state := initialState.Clone()
+			state.regA = regA
+			output, _, _ := ExecuteProgram(state, nil)
+			if len(output) == len(initialState.program) && output[outputOffset] == initialState.program[outputOffset] {
+				break
 			}
-		case 1:
-			regB = &Operation{operator: XOR, operand1Recursive: regB, operand2: operand.operand1}
-		case 2:
-			regB = &Operation{operator: MODULO, operand1Recursive: comboOperand, operand2: 8}
-		case 3:
-			if outputOffset == len(initialState.program) {
-				constraints = append(constraints, &Operation{operator: EQUAL, operand1Recursive: regA, operand2: 0})
-			} else {
-				constraints = append(constraints, &Operation{operator: NOT_EQUAL, operand1Recursive: regA, operand2: 0})
-				pc = operand.operand1 - 2
-			}
-		case 4:
-			regB = &Operation{operator: XOR, operand1Recursive: regB, operand2Recursive: regC}
-		case 5:
-			constraints = append(constraints, &Operation{
-				operator:          EQUAL,
-				operand1Recursive: &Operation{operator: MODULO, operand1Recursive: comboOperand, operand2: 8},
-				operand2:          initialState.program[outputOffset],
-			})
-			outputOffset++
-		case 6:
-			regB = &Operation{
-				operator:          DIVIDE,
-				operand1Recursive: regA,
-				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
-			}
-		case 7:
-			regC = &Operation{
-				operator:          DIVIDE,
-				operand1Recursive: regA,
-				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
-			}
+			regA += interval
 		}
 	}
-
-	for _, constraint := range constraints {
-		fmt.Println(constraint.simplifyConstants())
-		fmt.Println()
-	}
-	// return 0
-
-	for regA := 0; regA < 8; regA++ {
-		state := initialState.Clone()
-		state.regA = regA
-		output, _ := ExecuteProgram(state, nil)
-		fmt.Println(regA, output)
-	}
-
-	// Starting point derived from the above step (does not work for test example)
-	lowerBound := int(math.Pow(8, 16))
-
-	// We also know, based on first output, that regA % 8 == 5 (== 0 for the test example)
-	for lowerBound%8 != 5 {
-		lowerBound--
-	}
-
-	numWorkers := runtime.NumCPU()
-	resultChan := make(chan int)
-	for i := 0; i < numWorkers; i++ {
-		go searchQuineWorker(resultChan, initialState, lowerBound+8*i, 8*numWorkers)
-	}
-
-	return <-resultChan
-}
-
-func searchQuineWorker(resultChan chan int, initialState State, startSearchAt int, interval int) {
-	for regA := startSearchAt; true; regA += interval {
-		state := initialState.Clone()
-		state.regA = regA
-		_, isQuine := ExecuteProgram(state, initialState.program)
-		if isQuine {
-			resultChan <- regA
-			return
-		}
-	}
+	return regA
 }
