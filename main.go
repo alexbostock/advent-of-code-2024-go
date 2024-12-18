@@ -15,6 +15,7 @@ import (
 	"adventofcode2024/puzzle15"
 	"adventofcode2024/puzzle16"
 	"adventofcode2024/puzzle17"
+	"adventofcode2024/puzzle18"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -47,6 +48,7 @@ func main() {
 		{15, p15},
 		{16, p16},
 		{17, p17},
+		{18, p18},
 	}
 
 	puzzleNum := ""
@@ -196,4 +198,10 @@ func p17(input io.ReadSeeker) {
 	output, _ := puzzle17.ExecuteProgram(state.Clone(), nil)
 	fmt.Println(output)
 	fmt.Println(puzzle17.FindRegAValueWhichMakesQuine(state))
+}
+
+func p18(input io.ReadSeeker) {
+	bytes := puzzle18.ParseInput18(input)
+	fmt.Println(puzzle18.ShortestPathAfterBytesFallen(bytes, 71, 71, 1024))
+	fmt.Println(puzzle18.FindFirstByteObstructingExit(bytes, 71, 71))
 }
