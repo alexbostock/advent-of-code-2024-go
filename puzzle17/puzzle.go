@@ -2,6 +2,7 @@ package puzzle17
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -126,8 +127,185 @@ func getComboOperand(state State, operand int) int {
 	return 0 // combo operand should never be used in this case
 }
 
+type Operation struct {
+	operator          Operator
+	operand1          int
+	operand2          int
+	operand1Recursive *Operation
+	operand2Recursive *Operation
+}
+type Operator int
+
+const (
+	LITERAL          = 0
+	XOR     Operator = iota
+	MODULO
+	POWER
+	DIVIDE
+	INPUT_REG_A
+	EQUAL
+	NOT_EQUAL
+)
+
+func (operation *Operation) String() string {
+	var operand1Str string
+	if operation.operand1Recursive == nil {
+		operand1Str = strconv.Itoa(operation.operand1)
+	} else {
+		operand1Str = operation.operand1Recursive.String()
+	}
+	var operand2Str string
+	if operation.operand2Recursive == nil {
+		operand2Str = strconv.Itoa(operation.operand2)
+	} else {
+		operand2Str = operation.operand2Recursive.String()
+	}
+
+	switch operation.operator {
+	case LITERAL:
+		return operand1Str
+	case XOR:
+		return fmt.Sprintf("(%v ^ %v)", operand1Str, operand2Str)
+	case MODULO:
+		return fmt.Sprintf("(%v %% %v)", operand1Str, operand2Str)
+	case POWER:
+		return fmt.Sprintf("(%v ** %v)", operand1Str, operand2Str)
+	case DIVIDE:
+		return fmt.Sprintf("(%v / %v)", operand1Str, operand2Str)
+	case INPUT_REG_A:
+		return "R"
+	case EQUAL:
+		return fmt.Sprintf("(%v == %v)", operand1Str, operand2Str)
+	case NOT_EQUAL:
+		return fmt.Sprintf("(%v != %v)", operand1Str, operand2Str)
+	}
+	return ""
+}
+
+func (operation *Operation) simplifyConstants() *Operation {
+	if operation.operand1Recursive != nil {
+		operation.operand1Recursive = operation.operand1Recursive.simplifyConstants()
+	}
+	if operation.operand2Recursive != nil {
+		operation.operand2Recursive = operation.operand2Recursive.simplifyConstants()
+	}
+
+	if operation.operand1Recursive != nil && operation.operand1Recursive.operator == LITERAL {
+		operation.operand1 = operation.operand1Recursive.operand1
+		operation.operand1Recursive = nil
+	}
+	if operation.operand2Recursive != nil && operation.operand2Recursive.operator == LITERAL {
+		operation.operand2 = operation.operand2Recursive.operand1
+		operation.operand2Recursive = nil
+	}
+
+	if operation.operand1Recursive == nil && operation.operand2Recursive == nil {
+		switch operation.operator {
+		case XOR:
+			return &Operation{operator: LITERAL, operand1: operation.operand1 ^ operation.operand2}
+		case MODULO:
+			return &Operation{operator: LITERAL, operand1: operation.operand1 % operation.operand2}
+		case POWER:
+			return &Operation{
+				operator: LITERAL,
+				operand1: int(math.Pow(float64(operation.operand1), float64(operation.operand2))),
+			}
+		case DIVIDE:
+			return &Operation{operator: LITERAL, operand1: operation.operand1 / operation.operand2}
+		case EQUAL:
+			equal := 0
+			if operation.operand1 == operation.operand2 {
+				equal = 1
+			}
+			return &Operation{operator: LITERAL, operand1: equal}
+		case NOT_EQUAL:
+			notEqual := 1
+			if operation.operand1 == operation.operand2 {
+				notEqual = 0
+			}
+			return &Operation{operator: LITERAL, operand1: notEqual}
+		}
+	}
+
+	return operation
+}
+
+// Assumptions about the input:
+// - final instruction is a branch
+// - penultimate instruction is an output
+// so we can decide expected number of iterations based on length of expected output
 func FindRegAValueWhichMakesQuine(initialState State) int {
-	for regA := 1; true; regA++ {
+	var constraints []*Operation
+	regA := &Operation{operator: INPUT_REG_A}
+	regB := &Operation{operator: LITERAL, operand1: initialState.regB}
+	regC := &Operation{operator: LITERAL, operand1: initialState.regC}
+
+	outputOffset := 0
+
+	for pc := 0; pc < len(initialState.program); pc += 2 {
+		opcode := initialState.program[pc]
+		operand := &Operation{operator: LITERAL, operand1: initialState.program[pc+1]}
+		comboOperand := operand
+		switch operand.operand1 {
+		case 4:
+			comboOperand = regA
+		case 5:
+			comboOperand = regB
+		case 6:
+			comboOperand = regC
+		}
+
+		switch opcode {
+		case 0:
+			regA = &Operation{
+				operator:          DIVIDE,
+				operand1Recursive: regA,
+				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
+			}
+		case 1:
+			regB = &Operation{operator: XOR, operand1Recursive: regB, operand2: operand.operand1}
+		case 2:
+			regB = &Operation{operator: MODULO, operand1Recursive: comboOperand, operand2: 8}
+		case 3:
+			if outputOffset == len(initialState.program) {
+				constraints = append(constraints, &Operation{operator: EQUAL, operand1Recursive: regA, operand2: 0})
+			} else {
+				constraints = append(constraints, &Operation{operator: NOT_EQUAL, operand1Recursive: regA, operand2: 0})
+				pc = operand.operand1 - 2
+			}
+		case 4:
+			regB = &Operation{operator: XOR, operand1Recursive: regB, operand2Recursive: regC}
+		case 5:
+			constraints = append(constraints, &Operation{
+				operator:          EQUAL,
+				operand1Recursive: &Operation{operator: MODULO, operand1Recursive: comboOperand, operand2: 8},
+				operand2:          initialState.program[outputOffset],
+			})
+			outputOffset++
+		case 6:
+			regB = &Operation{
+				operator:          DIVIDE,
+				operand1Recursive: regA,
+				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
+			}
+		case 7:
+			regC = &Operation{
+				operator:          DIVIDE,
+				operand1Recursive: regA,
+				operand2Recursive: &Operation{operator: POWER, operand1: 2, operand2Recursive: comboOperand},
+			}
+		}
+	}
+
+	for _, constraint := range constraints {
+		fmt.Println(constraint)
+		fmt.Println(constraint.simplifyConstants())
+		fmt.Println()
+	}
+	// return 0
+
+	// Starting point derived from the above step
+	for regA := int(math.Pow(8, 16)); true; regA++ {
 		state := initialState.Clone()
 		state.regA = regA
 		_, isQuine := ExecuteProgram(state, initialState.program)
@@ -135,5 +313,5 @@ func FindRegAValueWhichMakesQuine(initialState State) int {
 			return regA
 		}
 	}
-	panic("Solution not found")
+	return 0
 }
