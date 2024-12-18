@@ -31,7 +31,7 @@ func TestExecuteProgram(t *testing.T) {
 		regA: 729, regB: 0, regC: 0,
 		program: []int{0, 1, 5, 4, 3, 0},
 	}
-	_, output, _ := ExecuteProgram(state, nil)
+	_, output := ExecuteProgram(state)
 	expected := "4,6,3,5,6,3,5,2,1,0"
 
 	if output != expected {

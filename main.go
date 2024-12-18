@@ -193,7 +193,7 @@ func p16(input io.ReadSeeker) {
 
 func p17(input io.ReadSeeker) {
 	state := puzzle17.ParseInput17(input)
-	_, output, _ := puzzle17.ExecuteProgram(state.Clone(), nil)
+	_, output := puzzle17.ExecuteProgram(state.Clone())
 	fmt.Println(output)
 	fmt.Println(puzzle17.FindRegAValueWhichMakesQuine(state))
 }

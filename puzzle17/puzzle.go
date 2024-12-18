@@ -2,7 +2,6 @@ package puzzle17
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -70,9 +69,8 @@ func (state State) Clone() State {
 	}
 }
 
-func ExecuteProgram(state State, expectedOutput []int) (output []int, outputStr string, matchesExpected bool) {
+func ExecuteProgram(state State) (output []int, outputStr string) {
 	var outputStrs []string
-	offsetInExpectedOutput := 0
 
 	for state.pc = 0; state.pc < len(state.program); state.pc += 2 {
 		opcode := state.program[state.pc]
@@ -94,13 +92,6 @@ func ExecuteProgram(state State, expectedOutput []int) (output []int, outputStr 
 			state.regB = state.regB ^ state.regC
 		case 5:
 			valToOutput := comboOperand % 8
-			if expectedOutput != nil {
-				if offsetInExpectedOutput >= len(expectedOutput) || valToOutput != expectedOutput[offsetInExpectedOutput] {
-					matchesExpected = false
-					return
-				}
-				offsetInExpectedOutput++
-			}
 			output = append(output, valToOutput)
 			outputStrs = append(outputStrs, strconv.Itoa(valToOutput))
 		case 6:
@@ -110,7 +101,7 @@ func ExecuteProgram(state State, expectedOutput []int) (output []int, outputStr 
 		}
 	}
 
-	return output, strings.Join(outputStrs, ","), expectedOutput == nil || len(output) == len(expectedOutput)
+	return output, strings.Join(outputStrs, ",")
 }
 
 func getComboOperand(state State, operand int) int {
@@ -129,116 +120,13 @@ func getComboOperand(state State, operand int) int {
 	return 0 // combo operand should never be used in this case
 }
 
-type Operation struct {
-	operator          Operator
-	operand1          int
-	operand2          int
-	operand1Recursive *Operation
-	operand2Recursive *Operation
-}
-type Operator int
-
-const (
-	LITERAL          = 0
-	XOR     Operator = iota
-	MODULO
-	POWER
-	DIVIDE
-	INPUT_REG_A
-	EQUAL
-	NOT_EQUAL
-)
-
-func (operation *Operation) String() string {
-	var operand1Str string
-	if operation.operand1Recursive == nil {
-		operand1Str = strconv.Itoa(operation.operand1)
-	} else {
-		operand1Str = operation.operand1Recursive.String()
-	}
-	var operand2Str string
-	if operation.operand2Recursive == nil {
-		operand2Str = strconv.Itoa(operation.operand2)
-	} else {
-		operand2Str = operation.operand2Recursive.String()
-	}
-
-	switch operation.operator {
-	case LITERAL:
-		return operand1Str
-	case XOR:
-		return fmt.Sprintf("(%v ^ %v)", operand1Str, operand2Str)
-	case MODULO:
-		return fmt.Sprintf("(%v %% %v)", operand1Str, operand2Str)
-	case POWER:
-		return fmt.Sprintf("(%v ** %v)", operand1Str, operand2Str)
-	case DIVIDE:
-		return fmt.Sprintf("(%v / %v)", operand1Str, operand2Str)
-	case INPUT_REG_A:
-		return "R"
-	case EQUAL:
-		return fmt.Sprintf("(%v == %v)", operand1Str, operand2Str)
-	case NOT_EQUAL:
-		return fmt.Sprintf("(%v != %v)", operand1Str, operand2Str)
-	}
-	return ""
-}
-
-func (operation *Operation) simplifyConstants() *Operation {
-	if operation.operand1Recursive != nil {
-		operation.operand1Recursive = operation.operand1Recursive.simplifyConstants()
-	}
-	if operation.operand2Recursive != nil {
-		operation.operand2Recursive = operation.operand2Recursive.simplifyConstants()
-	}
-
-	if operation.operand1Recursive != nil && operation.operand1Recursive.operator == LITERAL {
-		operation.operand1 = operation.operand1Recursive.operand1
-		operation.operand1Recursive = nil
-	}
-	if operation.operand2Recursive != nil && operation.operand2Recursive.operator == LITERAL {
-		operation.operand2 = operation.operand2Recursive.operand1
-		operation.operand2Recursive = nil
-	}
-
-	if operation.operand1Recursive == nil && operation.operand2Recursive == nil {
-		switch operation.operator {
-		case XOR:
-			return &Operation{operator: LITERAL, operand1: operation.operand1 ^ operation.operand2}
-		case MODULO:
-			return &Operation{operator: LITERAL, operand1: operation.operand1 % operation.operand2}
-		case POWER:
-			return &Operation{
-				operator: LITERAL,
-				operand1: int(math.Pow(float64(operation.operand1), float64(operation.operand2))),
-			}
-		case DIVIDE:
-			return &Operation{operator: LITERAL, operand1: operation.operand1 / operation.operand2}
-		case EQUAL:
-			equal := 0
-			if operation.operand1 == operation.operand2 {
-				equal = 1
-			}
-			return &Operation{operator: LITERAL, operand1: equal}
-		case NOT_EQUAL:
-			notEqual := 1
-			if operation.operand1 == operation.operand2 {
-				notEqual = 0
-			}
-			return &Operation{operator: LITERAL, operand1: notEqual}
-		}
-	}
-
-	return operation
-}
-
 func FindRegAValueWhichMakesQuine(initialState State) int {
 	// Observations:
 	// Changing regA by 1 changes first output
 	// Changing regA by 8 changes second output
 	// Changing regA by 64 changes third output
 	// etc.
-	// (in each case, there is a chance of no change; changing regA by 8^n is necessary, not sufficient)
+	// (in each case, there is a chance of no change; changing regA by 8**n is necessary, not sufficient)
 
 	regA := 0
 	for outputOffset := len(initialState.program) - 1; outputOffset >= 0; outputOffset-- {
@@ -246,7 +134,7 @@ func FindRegAValueWhichMakesQuine(initialState State) int {
 		for {
 			state := initialState.Clone()
 			state.regA = regA
-			output, _, _ := ExecuteProgram(state, nil)
+			output, _ := ExecuteProgram(state)
 			if len(output) == len(initialState.program) && output[outputOffset] == initialState.program[outputOffset] {
 				break
 			}
