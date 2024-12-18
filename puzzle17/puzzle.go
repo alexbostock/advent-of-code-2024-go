@@ -69,9 +69,8 @@ func (state State) Clone() State {
 	}
 }
 
-func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matchesExpected bool) {
-	var output []string
-	offsetInExpectedOutput := 0
+func ExecuteProgram(state State) (output []int, outputStr string) {
+	var outputStrs []string
 
 	for state.pc = 0; state.pc < len(state.program); state.pc += 2 {
 		opcode := state.program[state.pc]
@@ -93,13 +92,8 @@ func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matche
 			state.regB = state.regB ^ state.regC
 		case 5:
 			valToOutput := comboOperand % 8
-			if expectedOutput != nil {
-				if valToOutput != expectedOutput[offsetInExpectedOutput] {
-					return "", false
-				}
-				offsetInExpectedOutput++
-			}
-			output = append(output, strconv.Itoa(valToOutput))
+			output = append(output, valToOutput)
+			outputStrs = append(outputStrs, strconv.Itoa(valToOutput))
 		case 6:
 			state.regB = state.regA / int(math.Pow(2, float64(comboOperand)))
 		case 7:
@@ -107,7 +101,7 @@ func ExecuteProgram(state State, expectedOutput []int) (outputStr string, matche
 		}
 	}
 
-	return strings.Join(output, ","), expectedOutput == nil || len(output) == len(expectedOutput)
+	return output, strings.Join(outputStrs, ",")
 }
 
 func getComboOperand(state State, operand int) int {
@@ -127,13 +121,25 @@ func getComboOperand(state State, operand int) int {
 }
 
 func FindRegAValueWhichMakesQuine(initialState State) int {
-	for regA := 1; true; regA++ {
-		state := initialState.Clone()
-		state.regA = regA
-		_, isQuine := ExecuteProgram(state, initialState.program)
-		if isQuine {
-			return regA
+	// Observations:
+	// Changing regA by 1 changes first output
+	// Changing regA by 8 changes second output
+	// Changing regA by 64 changes third output
+	// etc.
+	// (in each case, there is a chance of no change; changing regA by 8**n is necessary, not sufficient)
+
+	regA := 0
+	for outputOffset := len(initialState.program) - 1; outputOffset >= 0; outputOffset-- {
+		interval := int(math.Pow(8, float64(outputOffset)))
+		for {
+			state := initialState.Clone()
+			state.regA = regA
+			output, _ := ExecuteProgram(state)
+			if len(output) == len(initialState.program) && output[outputOffset] == initialState.program[outputOffset] {
+				break
+			}
+			regA += interval
 		}
 	}
-	panic("Solution not found")
+	return regA
 }
