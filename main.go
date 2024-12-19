@@ -16,6 +16,7 @@ import (
 	"adventofcode2024/puzzle16"
 	"adventofcode2024/puzzle17"
 	"adventofcode2024/puzzle18"
+	"adventofcode2024/puzzle19"
 	"adventofcode2024/puzzle2"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
@@ -49,6 +50,7 @@ func main() {
 		{16, p16},
 		{17, p17},
 		{18, p18},
+		{19, p19},
 	}
 
 	puzzleNum := ""
@@ -204,4 +206,10 @@ func p18(input io.ReadSeeker) {
 	bytes := puzzle18.ParseInput18(input)
 	fmt.Println(puzzle18.ShortestPathAfterBytesFallen(bytes, 71, 71, 1024))
 	fmt.Println(puzzle18.FindFirstByteObstructingExit(bytes, 71, 71))
+}
+
+func p19(input io.ReadSeeker) {
+	towelsAndDesigns := puzzle19.ParseInput19(input)
+	fmt.Println(puzzle19.CountPossibleDesigns(towelsAndDesigns))
+	fmt.Println(puzzle19.SumPossibleWaysOfMakingDesigns(towelsAndDesigns))
 }
