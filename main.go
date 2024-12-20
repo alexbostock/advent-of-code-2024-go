@@ -18,6 +18,7 @@ import (
 	"adventofcode2024/puzzle18"
 	"adventofcode2024/puzzle19"
 	"adventofcode2024/puzzle2"
+	"adventofcode2024/puzzle20"
 	"adventofcode2024/puzzle3"
 	"adventofcode2024/puzzle4"
 	"adventofcode2024/puzzle5"
@@ -51,6 +52,7 @@ func main() {
 		{17, p17},
 		{18, p18},
 		{19, p19},
+		{20, p20},
 	}
 
 	puzzleNum := ""
@@ -212,4 +214,10 @@ func p19(input io.ReadSeeker) {
 	towelsAndDesigns := puzzle19.ParseInput19(input)
 	fmt.Println(puzzle19.CountPossibleDesigns(towelsAndDesigns))
 	fmt.Println(puzzle19.SumPossibleWaysOfMakingDesigns(towelsAndDesigns))
+}
+
+func p20(input io.ReadSeeker) {
+	maze := puzzle20.ParseInput20(input)
+	fmt.Println(maze.NumCheatsSavingAtLeast(2, 100))
+	fmt.Println(maze.NumCheatsSavingAtLeast(20, 100))
 }
