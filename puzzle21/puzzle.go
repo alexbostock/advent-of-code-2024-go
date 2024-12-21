@@ -46,14 +46,14 @@ func ParseInput21(input io.Reader) (codes []string) {
 	return
 }
 
-func TotalComplexityOfCodes(codes []string) (total int) {
+func TotalComplexityOfCodes(codes []string, numIntermediateRobots int) (total int) {
 	for _, code := range codes {
-		total += complexityOfCode(code)
+		total += complexityOfCode(code, numIntermediateRobots)
 	}
 	return
 }
 
-func complexityOfCode(code string) int {
+func complexityOfCode(code string, numIntermediateRobots int) int {
 	numericPart := 0
 	for _, char := range []rune(code) {
 		if unicode.IsDigit(char) {
@@ -61,21 +61,47 @@ func complexityOfCode(code string) int {
 			numericPart = 10*numericPart + digit
 		}
 	}
-	return len(shortestPathToInputCode(code)) * numericPart
+	return len(shortestPathToInputCode(code, numIntermediateRobots)) * numericPart
 }
 
-func shortestPathToInputCode(code string) []Instruction {
+func shortestPathToInputCode(code string, numIntermediateRobots int) []Instruction {
 	var shortestCandidate []Instruction
-	for _, candidateNumeric := range candidateNumericKeypadSequencesToInputCode([]rune(code)) {
-		for _, candidateFirstDirectional := range candidateDirectionalKeypadSequencesToInputInstructions(candidateNumeric) {
-			for _, candidateSecondDirectional := range candidateDirectionalKeypadSequencesToInputInstructions(candidateFirstDirectional) {
-				if shortestCandidate == nil || len(candidateSecondDirectional) < len(shortestCandidate) {
-					shortestCandidate = candidateSecondDirectional
-				}
-			}
+	// for _, candidateNumeric := range candidateNumericKeypadSequencesToInputCode([]rune(code)) {
+	// 	for _, candidateFirstDirectional := range candidateDirectionalKeypadSequencesToInputInstructions(candidateNumeric) {
+	// 		for _, candidateSecondDirectional := range candidateDirectionalKeypadSequencesToInputInstructions(candidateFirstDirectional) {
+	// 			if shortestCandidate == nil || len(candidateSecondDirectional) < len(shortestCandidate) {
+	// 				shortestCandidate = candidateSecondDirectional
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// return shortestCandidate
+
+	candidates := make(chan []Instruction, 1)
+	go generateCandidates(candidates, code, numIntermediateRobots)
+	for candidate := range candidates {
+		if shortestCandidate == nil || len(candidate) < len(shortestCandidate) {
+			shortestCandidate = candidate
 		}
 	}
 	return shortestCandidate
+}
+
+func generateCandidates(output chan []Instruction, code string, numIntermediateRobots int) {
+	if numIntermediateRobots == 0 {
+		for _, candidateNumeric := range candidateNumericKeypadSequencesToInputCode([]rune(code)) {
+			output <- candidateNumeric
+		}
+	} else {
+		nestedCandidates := make(chan []Instruction, 1)
+		go generateCandidates(nestedCandidates, code, numIntermediateRobots-1)
+		for nestedCandidate := range nestedCandidates {
+			for _, candidate := range candidateDirectionalKeypadSequencesToInputInstructions(nestedCandidate) {
+				output <- candidate
+			}
+		}
+	}
+	close(output)
 }
 
 func candidateNumericKeypadSequencesToInputCode(code []rune) [][]Instruction {

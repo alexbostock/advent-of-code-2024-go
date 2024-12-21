@@ -226,5 +226,6 @@ func p20(input io.ReadSeeker) {
 
 func p21(input io.ReadSeeker) {
 	codes := puzzle21.ParseInput21(input)
-	fmt.Println(puzzle21.TotalComplexityOfCodes(codes))
+	fmt.Println(puzzle21.TotalComplexityOfCodes(codes, 2))
+	fmt.Println(puzzle21.TotalComplexityOfCodes(codes, 1))
 }

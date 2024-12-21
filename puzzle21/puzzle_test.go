@@ -7,7 +7,7 @@ import (
 )
 
 func TestTotalComplexityOfCodes(t *testing.T) {
-	got := TotalComplexityOfCodes([]string{"029A", "980A", "179A", "456A", "379A"})
+	got := TotalComplexityOfCodes([]string{"029A", "980A", "179A", "456A", "379A"}, 2)
 	expected := 126384
 	if expected != got {
 		t.Errorf("expected %d, got %d", expected, got)
@@ -27,7 +27,7 @@ func TestComplexityOfCode(t *testing.T) {
 	}
 
 	for _, example := range examples {
-		got := complexityOfCode(example.code)
+		got := complexityOfCode(example.code, 2)
 		if got != example.complexity {
 			t.Errorf("%v: expected %d, got %d", example.code, example.complexity, got)
 		}
@@ -35,7 +35,7 @@ func TestComplexityOfCode(t *testing.T) {
 }
 
 func TestShortestPathToInputCode(t *testing.T) {
-	got := shortestPathToInputCode("029A")
+	got := shortestPathToInputCode("029A", 2)
 	expected := "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"
 	if len(expected) != len(got) {
 		t.Errorf("029A: expected length %d eg. %v, got %v (length %d)", len(expected), expected, got, len(got))
